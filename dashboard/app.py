@@ -1,6 +1,10 @@
+from pathlib import Path
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = BASE_DIR / "data" / "processed"
+
 
 # ================================
 # PAGE CONFIG
@@ -15,15 +19,18 @@ st.set_page_config(
 # ================================
 @st.cache_data
 def load_data():
-    monthly = pd.read_csv("data/processed/monthly_metrics_trimmed.csv")
-    stress_dist = pd.read_csv("/data/processed/stress_distribution.csv")
-    stress_trend = pd.read_csv("/data/processed/stress_trend.csv")
-    stress_drivers = pd.read_csv("/data/processed/stress_drivers.csv")
-    customer_summary = pd.read_csv("data/processed/top_risk_customers.csv")
+    monthly = pd.read_csv(DATA_DIR / "monthly_metrics_trimmed.csv")
+    stress_dist = pd.read_csv(DATA_DIR / "stress_distribution.csv")
+    stress_trend = pd.read_csv(DATA_DIR / "stress_trend.csv")
+    stress_drivers = pd.read_csv(DATA_DIR / "stress_drivers.csv")
+    top_customers = pd.read_csv(DATA_DIR / "top_risk_customers.csv")
 
-    return monthly, stress_dist, stress_trend, stress_drivers, customer_summary
+    return monthly, stress_dist, stress_trend, stress_drivers, top_customers
+
+
 
 monthly, stress_dist, stress_trend, stress_drivers, customer_summary = load_data()
+
 
 # ================================
 # SIDEBAR NAVIGATION
@@ -150,8 +157,11 @@ elif page == "Customer Analysis":
 
     # Stress Indicators
     st.subheader("Stress Indicators")
-    latest = cust_data.iloc[-1]
+    if cust_data.empty:
+        st.warning("No recent monthly data available for this customer.")
+        st.stop()
 
+    latest = cust_data.iloc[-1]
     indicators = []
     if latest['monthly_income'] == 0:
         indicators.append("❌ No Income")
